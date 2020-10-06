@@ -1,12 +1,13 @@
-FROM mhart/alpine-node:11 AS builder
-WORKDIR /app
-COPY . .
-RUN yarn global add serve
-RUN yarn install
-RUN yarn run build
+FROM node:7.10 as build-deps
+WORKDIR /usr/src/app
+COPY package.json yarn.lock ./
+RUN yarn
+COPY . ./
+RUN yarn build
 
-FROM mhart/alpine-node
 
-WORKDIR /app
-COPY --from=builder /app/build .
-CMD ["serve", "-p", "7078", "-s", "."]
+FROM nginx:1.15.2-alpine
+COPY --from=build-steps usr/src/app/build /var/www
+COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
+ENTRYPOINT ["nginx","-g","daemon off;"]
