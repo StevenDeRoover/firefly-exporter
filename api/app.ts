@@ -1,6 +1,6 @@
-import * as bodyParser from "body-parser";
 import express from "express";
 import Routes from "./routes";
+import bodyParser from "body-parser";
 const path = require('path');
 
 class App {
