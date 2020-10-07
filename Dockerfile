@@ -1,13 +1,28 @@
-FROM node:12 AS build-steps
+FROM node:12.18.4-alpine3.10 AS build-steps
 WORKDIR /usr/src/app
-COPY package.json yarn.lock ./
+COPY ./app/package.json ./app/yarn.lock ./
 RUN yarn
-COPY . ./
+COPY ./app ./
 RUN yarn build
 
+FROM node:12.18.4-alpine3.10 AS build-server
+WORKDIR /usr/src/api
+COPY ./api/package.json ./api/yarn.lock ./
+CMD cat package.json
+RUN yarn
+COPY ./api ./
+RUN yarn build
+#RUN yarn add global typescript
+#RUN yarn install
 
-FROM nginx:1.15.2-alpine
+RUN npx tsc
+
+FROM nginx:1.19.3-alpine
+RUN apk add --update nodejs npm
 COPY --from=build-steps usr/src/app/build /var/www
+COPY --from=build-server usr/src/api/build /var/www/server/
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY ./start.sh /usr/bin/
 EXPOSE 80
-ENTRYPOINT ["nginx","-g","daemon off;"]
+EXPOSE 3080
+ENTRYPOINT ["/usr/bin/start.sh"] 
